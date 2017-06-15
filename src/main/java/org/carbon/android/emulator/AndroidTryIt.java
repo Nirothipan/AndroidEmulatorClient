@@ -449,11 +449,11 @@ public class AndroidTryIt {
         URL url = null;
         String folderName = null;
         //  Build tools location in the Android SDK
-        File build_tools = new File(androidSdkHome + File.separator + "build-tools"
+        File buildTools = new File(androidSdkHome + File.separator + "build-tools"
                 + File.separator + "25.0.2");
 
         // download the build tools if not available
-        if (!build_tools.exists()) {
+        if (!buildTools.exists()) {
             System.out.println("Downloading Android build tools...");
             try {
                 url = new URL("https://dl.google.com/android/repository/build-tools_r25.0.2-" + osSuffix + ".zip");
@@ -464,11 +464,13 @@ public class AndroidTryIt {
             }
             // download build tools
             downloadArtifacts(url, androidSdkHome + File.separator + folderName);   // CODE
+
             System.out.println("Configuring Android build tools...");
             extractFolder(androidSdkHome + File.separator + folderName);
-            File build_tool = new File(androidSdkHome + File.separator + "android-7.1.1");
+
+            File buildTool = new File(androidSdkHome + File.separator + "android-7.1.1");
             new File(androidSdkHome + File.separator + "build-tools").mkdirs();
-            build_tool.renameTo(new File(androidSdkHome + File.separator + "build-tools" + File.separator + "25.0.2"));
+            buildTool.renameTo(new File(androidSdkHome + File.separator + "build-tools" + File.separator + "25.0.2"));
         }
     }
 
