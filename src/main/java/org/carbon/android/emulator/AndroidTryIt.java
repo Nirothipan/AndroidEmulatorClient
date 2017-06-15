@@ -46,8 +46,8 @@ public class AndroidTryIt {
      * constructor to get the system specific variables
      */
     private AndroidTryIt() {
-        osSuffix = System.getProperty("os.name").toLowerCase();
-        userHome = System.getProperty("user.home");
+        osSuffix = System.getProperty("os.name").toLowerCase();             // get the OS name of the user
+        userHome = System.getProperty("user.home");                         // get the user HOME location
         workingDirectory = System.getProperty("user.dir");
 
         if (osSuffix.contains("windows")) {
@@ -67,8 +67,8 @@ public class AndroidTryIt {
     public static void main(String[] args) {
 
         AndroidTryIt tryIt = new AndroidTryIt();
-        tryIt.setAndroidSDK();           //  to set the androidSdkHome variable
-        tryIt.checkBuildTools();         // check for the availability of build tools in SDK location
+        tryIt.setAndroidSDK();                          //  to set the androidSdkHome variable
+        tryIt.checkBuildTools();                        // check for the availability of build tools in SDK location
 
         try {
             tryIt.startAVD();                    // Starting a new Android Virtual Device
@@ -82,9 +82,9 @@ public class AndroidTryIt {
             e.printStackTrace();
         }
 
-        String[] agents = new String[2];        // The agents type ,{ package_name , act_name }
+        String[] agents = new String[2];                    // The agent names ,{ package name , launchable activity name }
         try {
-            agents = tryIt.checkForAgent();           //  Get the Name of the agents
+            agents = tryIt.checkForAgent();                //  Check for the availability of agents in the AVD
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -111,7 +111,7 @@ public class AndroidTryIt {
         System.out.println("Connected to device shell");
         try {
             if (startShell == null) throw new AssertionError();
-            startShell.waitFor();                                                     // wait for the shell process to complete
+            startShell.waitFor();                                         // wait for the shell process to complete
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -129,17 +129,17 @@ public class AndroidTryIt {
         ReadableByteChannel rbc = null;
         FileOutputStream fos = null;
         try {
-            rbc = Channels.newChannel(url.openStream());        // Byte channel to read from the URL specified
-            fos = new FileOutputStream(folderName);             // File output stream to write to the folder specified by the folderName
+            rbc = Channels.newChannel(url.openStream());             // Byte channel to read from the URL specified
+            fos = new FileOutputStream(folderName);                  // File output stream to write to the folder specified by the folderName
             fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
             try {
-                if(fos!= null) {
+                if (fos != null) {
                     fos.close();
                 }
-                if(rbc != null) {
+                if (rbc != null) {
                     rbc.close();
                 }
             } catch (IOException e) {
@@ -154,7 +154,6 @@ public class AndroidTryIt {
      * the file sdkLocationFile ( can be refferred later to get the location of SDK
      */
     private void setSDKPath() {
-
         System.out.println("Please provide android SDK location");
         String response = new Scanner(System.in).next();                                    // get the response of the user
         // Emulator location of the user provided SDK location
@@ -191,10 +190,9 @@ public class AndroidTryIt {
         // Downloading Android SDK Tools
         System.out.println("Downloading Android SDK tools...");
 
-        /*
-         * makes directory in the working folder to download SDK , if the directory cannot be made quit the program and
-         * ask user to check for the available directories in the same name.
-         */
+
+        /*  makes directory in the working folder to download SDK , if the directory cannot be made quit the program and
+          ask user to check for the available directories in the same name. */
         if (!new File(workingDirectory + File.separator + androidSdkFolderName).mkdir()) {
             System.out.println("Unable to make a directory named " + androidSdkFolderName + " in " + workingDirectory);
             System.out.println("Please make sure it is not available already and can be created");
@@ -270,6 +268,7 @@ public class AndroidTryIt {
         String emulatorLocation = androidSdkHome + File.separator + "tools" + File.separator + "emulator";
         if (osSuffix.equals("windows")) emulatorLocation += ".exe";
         setExectuePermission(emulatorLocation);
+        // process to list the available AVDs
         ProcessBuilder processBuilder = new ProcessBuilder(emulatorLocation, "-list-avds");
         Process process = processBuilder.start();
 
@@ -405,7 +404,9 @@ public class AndroidTryIt {
                 if (destinationParent == null) {
                     destFile.mkdirs();
                     continue;
-                } else destinationParent.mkdirs();
+                } else {
+                    destinationParent.mkdirs();
+                }
 
                 if (!entry.isDirectory()) {
                     BufferedInputStream is;
@@ -447,6 +448,7 @@ public class AndroidTryIt {
     private void checkBuildTools() {
         URL url = null;
         String folderName = null;
+        //  Build tools location in the Android SDK
         File build_tools = new File(androidSdkHome + File.separator + "build-tools"
                 + File.separator + "25.0.2");
 
@@ -460,6 +462,7 @@ public class AndroidTryIt {
                 e.printStackTrace();
                 System.exit(0);
             }
+            // download build tools
             downloadArtifacts(url, androidSdkHome + File.separator + folderName);   // CODE
             System.out.println("Configuring Android build tools...");
             extractFolder(androidSdkHome + File.separator + folderName);
@@ -476,9 +479,10 @@ public class AndroidTryIt {
      * @throws IOException process throws  if an I/O error occurs
      */
     private void checkEmulatorBoot() throws IOException {
+        // adb executable location in the Android SDK
         String adbLocation = androidSdkHome + File.separator + "platform-tools" + File.separator + "adb";
         if (osSuffix.equals("windows")) adbLocation += ".exe";
-        setExectuePermission(adbLocation);
+        setExectuePermission(adbLocation);                    // set permission for executable
 
         BufferedReader reader;
         String readline;
@@ -487,7 +491,7 @@ public class AndroidTryIt {
         do {
             // process to check boot completion process
             ProcessBuilder systemBoot = new ProcessBuilder(adbLocation, "shell", "getprop", "sys.boot_completed");
-            Process systemBootProcess= systemBoot.start();
+            Process systemBootProcess = systemBoot.start();
             try {
                 systemBootProcess.waitFor();
             } catch (InterruptedException e) {
@@ -496,6 +500,7 @@ public class AndroidTryIt {
             }
             reader = new BufferedReader(new InputStreamReader(systemBootProcess.getInputStream()));
             while ((readline = reader.readLine()) != null) {
+                // if boot process is success the process gives 1 as output
                 if (readline.contains("1")) sys_boot_complete = true;
             }
             reader.close();
@@ -511,7 +516,7 @@ public class AndroidTryIt {
     }
 
     /**
-     * Ask the user whether Android SDK is available and sets the SDK path if not downloads the SDK
+     * Ask the user whether Android SDK is available and sets the SDK path, if not downloads the SDK
      */
     private void setAndroidSDK() {
         sdkLocationFile = new File("sdkLocation");
@@ -545,10 +550,12 @@ public class AndroidTryIt {
      */
     private String[] checkForAgent() throws IOException {
 
+        // location of the executable file adb present in Android SDK
         String adbLocation = androidSdkHome + File.separator + "platform-tools" + File.separator + "adb";
         if (osSuffix.equals("windows")) adbLocation += ".exe";
         setExectuePermission(adbLocation);
 
+        // location of the executable file aapt present in Android SDK
         String apk_file_location = workingDirectory + File.separator + "resources" + File.separator + "android-agent.apk";
         String aapt_location = androidSdkHome + File.separator + "build-tools" + File.separator + "25.0.2"
                 + File.separator + "aapt";
@@ -605,7 +612,7 @@ public class AndroidTryIt {
     /**
      * installs the Android Agent
      *
-     * @throws IOException process throws  if an I/O error occurs
+     * @throws IOException process start throws  if an I/O error occurs
      */
     private void installAgent() throws IOException {
         String adbLocation = androidSdkHome + File.separator + "platform-tools" + File.separator + "adb";
@@ -633,12 +640,13 @@ public class AndroidTryIt {
      * @throws IOException process throws  if an I/O error occurs
      */
     private void startPackage(String[] agents) throws IOException {
-        String pkg = agents[0];
-        String act = agents[1];
+        String pkg = agents[0];                // package name
+        String act = agents[1];                     // launchable activity name
 
         String adbLocation = androidSdkHome + File.separator + "platform-tools" + File.separator + "adb";
         if (osSuffix.equals("windows")) adbLocation += ".exe";
         setExectuePermission(adbLocation);
+        // process to start the package
         ProcessBuilder pkg_start = new ProcessBuilder(adbLocation, "shell", "am", "start", "-n", pkg + "/" + act);
         Process pkg_start_process = pkg_start.start();
 
@@ -669,6 +677,7 @@ public class AndroidTryIt {
                 e.printStackTrace();
                 System.exit(0);
             }
+            // download Android Platform
             downloadArtifacts(url, androidSdkHome + File.separator + folderName);
             System.out.println("Configuring Android Platform...");
             extractFolder(androidSdkHome + File.separator + folderName);
@@ -682,9 +691,10 @@ public class AndroidTryIt {
      * checks for the system images in the Android SDK and downloads if not available
      */
     private void checkForSystemImages() {
+        // System images location in the Android SDK
         File system_images = new File(androidSdkHome + File.separator + "system-images"
                 + File.separator + "android-23" + File.separator + "default");
-
+        // check for system images directory
         if (!system_images.isDirectory()) {
             System.out.println("Downloading Android system image...");
             URL url = null;
@@ -696,6 +706,7 @@ public class AndroidTryIt {
                 e.printStackTrace();
                 System.exit(0);
             }
+            // download system images
             downloadArtifacts(url, androidSdkHome + File.separator + folderName);
             System.out.println("Configuring Android system image...");
             extractFolder(androidSdkHome + File.separator + folderName);
@@ -799,6 +810,7 @@ public class AndroidTryIt {
     private void checkCache_img(String deviceId) {
         File cache_img = new File(userHome + File.separator + ".android"
                 + File.separator + "avd" + File.separator + deviceId + ".avd" + File.separator + "cache.img");
+        // cache image ensures whether the AVD is loaded properly
         while (!cache_img.exists()) {
             System.out.print(".");
             try {
@@ -822,6 +834,7 @@ public class AndroidTryIt {
     /**
      * set the executable permission for the specified file . if the files are not the executable,
      * the process won't work
+     *
      * @param fileName name of the file to set execution permission
      */
     private static void setExectuePermission(String fileName) {
