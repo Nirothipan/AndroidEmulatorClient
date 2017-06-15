@@ -15,7 +15,7 @@
 * specific language governing permissions and limitations
 * under the License.
 */
-package org.wso2.carbon;
+package org.carbon.android.emulator;
 
 import java.io.BufferedReader;
 import java.io.FileWriter;
@@ -25,49 +25,46 @@ import java.io.InputStreamReader;
 /**
  * This class starts the Emulator with the passed ID and log the output to emulator.log
  */
-public class RunEmulator implements Runnable {
+public class AndroidTryItEmulator implements Runnable {
     private Thread thread;
-    private String device_id;                    // name of the emulator to start
-    private String emulator_location;            // location of the executable file emulator
+    private String deviceID;                    // name of the emulator to start
+    private String emulatorLocation;            // location of the executable file emulator
 
-    RunEmulator(String id, String emulator) {
-        device_id = id;
-        emulator_location = emulator;
+    AndroidTryItEmulator(String id, String emulator) {
+        deviceID = id;
+        emulatorLocation = emulator;
     }
 
     /**
-     * run the emulator specified by the device_id
+     * run the emulator specified by the deviceID
      */
-    public void run(){
-        ProcessBuilder processBuilder = new ProcessBuilder(emulator_location, "-avd", device_id);
+    public void run() {
+        BufferedReader reader;
+        ProcessBuilder processBuilder = new ProcessBuilder(emulatorLocation, "-avd", deviceID);
         try {
-            Process  process = processBuilder.start();
-
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            Process process = processBuilder.start();
+            reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String readline;
             try (FileWriter writer = new FileWriter("emulator.log")) {
                 try {
-                    while ((readline = reader.readLine()) != null ) {
+                    while ((readline = reader.readLine()) != null) {
                         writer.append(readline);
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-            }
-            try {
+            } finally {
                 reader.close();
-            } catch (IOException e) {
-                e.printStackTrace();
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void start () {
+    void  start() {
         if (thread == null) {
-            thread = new Thread (this);
-            thread.start ();
+            thread = new Thread(this);
+            thread.start();
         }
     }
 }
