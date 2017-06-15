@@ -826,9 +826,9 @@ public class AndroidTryIt {
 
     /**
      * set the executable permission for the specified file . if the files are not the executable,
-     * the process wot't work
+     * the process won't work
      *
-     * @param fileName name os the file to set execution permission
+     * @param fileName name of the file to set execution permission
      */
     private static void setExectuePermission(String fileName) {
         if (!new File(fileName).canExecute()) {
