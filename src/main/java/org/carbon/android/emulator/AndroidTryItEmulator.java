@@ -35,9 +35,6 @@ public class AndroidTryItEmulator implements Runnable {
         emulatorLocation = emulator;
     }
 
-    /**
-     * run the emulator specified by the deviceID
-     */
     public void run() {
         BufferedReader reader;
         // create a process to start the AVD specified bt deviceID
