@@ -32,11 +32,6 @@ import java.util.Scanner;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-//import java.nio.file.Files;
-//import java.nio.file.Paths;
-//import java.nio.file.StandardCopyOption;
-
-
 /**
  * This class creates an Android TryIt Emulator to be used as virtual device to connect to WSO2 IOT Cloud or Product-iot.
  */
@@ -827,7 +822,6 @@ public class AndroidTryIt {
     /**
      * set the executable permission for the specified file . if the files are not the executable,
      * the process won't work
-     *
      * @param fileName name of the file to set execution permission
      */
     private static void setExectuePermission(String fileName) {
