@@ -25,28 +25,28 @@ import java.io.InputStreamReader;
 /**
  * This class starts the Emulator with the passed ID and log the output to emulator.log.
  */
-public class AndroidTryItEmulator implements Runnable {
+public class TryItEmulator implements Runnable {
     private String deviceID;                    // name of the AVD to start
     private String emulatorLocation;            // location of the executable file emulator
 
-    AndroidTryItEmulator(String id, String emulator) {
+    TryItEmulator(String id, String emulator) {
         deviceID = id;
         emulatorLocation = emulator;
     }
 
     public void run() {
         BufferedReader reader;
-        // create a process to start the AVD specified bt deviceID
         ProcessBuilder processBuilder = new ProcessBuilder(emulatorLocation, "-avd", deviceID);
         try {
-            String readline;
+            String readLine;
+
             Process process = processBuilder.start();
             reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            // write the emulator start process output to the file emulator.log
+
             try (FileWriter writer = new FileWriter("emulator.log")) {
                 try {
-                    while ((readline = reader.readLine()) != null) {
-                        writer.append(readline);
+                    while ((readLine = reader.readLine()) != null) {
+                        writer.append(readLine);
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
