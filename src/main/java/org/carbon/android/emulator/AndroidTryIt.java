@@ -18,7 +18,15 @@
 
 package org.carbon.android.emulator;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.channels.Channels;
@@ -35,6 +43,7 @@ import java.util.zip.ZipFile;
 /**
  * This class creates an Android TryIt Emulator to be used as virtual device to connect to WSO2 IOT Cloud or Product-iot.
  */
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public class AndroidTryIt {
     private String osSuffix;                        // OS type of the user
     private String androidSdkHome;                  // Android SDK location
@@ -721,6 +730,7 @@ public class AndroidTryIt {
     /**
      * This method install Hardware_Accelerated Execution_Manager in mac and windows os.
      */
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     private void installHAXM() {
         String HAXM_location = androidSdkHome + File.separator + "extras" + File.separator + "intel"
                 + File.separator + "Hardware_Accelerated_Execution_Manager";
