@@ -18,15 +18,7 @@
 
 package org.carbon.android.emulator;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.channels.Channels;
@@ -37,33 +29,37 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 /**
  * This class creates an Android TryIt Emulator to be used as virtual device to connect to WSO2 IOT Cloud or Product-iot.
  */
-@SuppressWarnings("ResultOfMethodCallIgnored")
-public class AndroidTryIt {
+
+public class TryIt {
+
     private String osSuffix;                        // OS type of the user
     private String androidSdkHome;                  // Android SDK location
     private String userHome;                        // User home location
     private String workingDirectory;                // Present working directory
     private File sdkLocationFile;                   // File to write the Android SDK location, created in workingDirectory
+    private String adbLocation;
 
     /**
      * This method gets the system specific variables.
      */
-    private AndroidTryIt() {
-        osSuffix = System.getProperty("os.name").toLowerCase();             // get the OS name of the user
-        userHome = System.getProperty("user.home");                         // get the user HOME location
-        workingDirectory = System.getProperty("user.dir");
+    private TryIt() {
+        osSuffix = System.getProperty(Constants.OS_NAME_PROPERTY).toLowerCase();             // get the OS name of the user
+        userHome = System.getProperty(Constants.USER_HOME_PROPERTY);                         // get the user HOME location
+        workingDirectory = System.getProperty(Constants.USER_DIRECTORY_PROPERTY);
 
-        if (osSuffix.contains("windows")) {
-            osSuffix = "windows";                        // setting the osSuffix for windows
+        if (osSuffix.contains(Constants.WINDOWS_OS)) {
+            osSuffix = Constants.WINDOWS_OS;                        // setting the osSuffix for windows
         }
         if (osSuffix.contains("mac")) {
-            osSuffix = "macosx";                         // setting the osSuffix for mac
+            osSuffix = Constants.MAC_OS;                         // setting the osSuffix for mac
         }
         System.out.println("Detected OS " + osSuffix);
     }
@@ -75,7 +71,8 @@ public class AndroidTryIt {
      */
     public static void main(String[] args) {
 
-        AndroidTryIt tryIt = new AndroidTryIt();
+        TryIt tryIt = new TryIt();
+        Process startShell = null;
         tryIt.setAndroidSDK();                          //  to set the androidSdkHome variable
         tryIt.checkBuildTools();                        // check for the availability of build tools in SDK location
 
@@ -106,14 +103,15 @@ public class AndroidTryIt {
             e.printStackTrace();
         }
 
-        // adb location of the SDK
-        String adbLocation = tryIt.androidSdkHome + File.separator + "platform-tools" + File.separator + "adb";
-        if (tryIt.osSuffix.equals("windows"))
-            adbLocation += ".exe";                // for windows the file name is adb.exe
-        setExectuePermission(adbLocation);                               // set the executable permission
-        Process startShell = null;                                        // creating a process to start the shell
+//        // adb location of the SDK
+//        tryIt.adbLocation = tryIt.androidSdkHome + File.separator + "platform-tools" + File.separator + "adb";
+//        if (tryIt.osSuffix.equals(Constants.WINDOWS_OS))
+//            tryItadbLocation += Constants.WINDOWS_EXTENSION_EXE;                // for windows the file name is adb.exe
+//        setExecutePermission(adbLocation);
+// set the executable permission
+
         try {
-            startShell = new ProcessBuilder(adbLocation, "shell").start();     // start the shell
+            startShell = new ProcessBuilder(tryIt.adbLocation, "shell").start();     // start the shell
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -127,16 +125,24 @@ public class AndroidTryIt {
         System.out.println("Good Bye!");
     }
 
-
     /**
      * This method downloads the files.
      *
-     * @param url        - the URL to download from.
+     * @param path       - the URL to download from.
      * @param folderName - the folder location to download the files to.
      */
-    private static void downloadArtifacts(URL url, String folderName) {
+    private static void downloadArtifacts(String path, String folderName) {
         ReadableByteChannel rbc = null;
         FileOutputStream fos = null;
+
+        URL url = null;
+        try {
+            url = new URL(path);
+        } catch (MalformedURLException ignored) {
+            System.out.println("Downloading " + folderName + " failed.");
+            System.exit(0);
+        }
+
         try {
             rbc = Channels.newChannel(url.openStream());             // Byte channel to read from the URL specified
             fos = new FileOutputStream(folderName);                  // File output stream to write to the folder specified by the folderName
@@ -151,8 +157,10 @@ public class AndroidTryIt {
                 if (rbc != null) {
                     rbc.close();
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
+            } catch (IOException ignored) {
+
+                //TODO
+                //e.printStackTrace();
             }
         }
     }
@@ -168,8 +176,8 @@ public class AndroidTryIt {
         // Emulator location of the user provided SDK location
         String emulatorLocation = response + File.separator + "tools" + File.separator + "emulator";
 
-        if (osSuffix.equals("windows")) {                      // windows emulator location ends with .exe
-            emulatorLocation += ".bat";
+        if (osSuffix.equals(Constants.WINDOWS_OS)) {                      // windows emulator location ends with .exe
+            emulatorLocation += Constants.WINDOWS_EXTENSION_BAT;
         }
 
         // checks for the Emulator , if present user provided SDK location is validated else asked for the location again
@@ -177,8 +185,10 @@ public class AndroidTryIt {
             try (FileWriter writer = new FileWriter(sdkLocationFile)) {
                 writer.write(response);
             } catch (IOException e) {
+                androidSdkHome = response;
                 e.printStackTrace();
-                System.exit(0);
+                System.out.println("Unable to write the location to file ");
+                //System.exit(0);
             }
         } else {
             System.out.println("Invalid SDK location");
@@ -193,58 +203,42 @@ public class AndroidTryIt {
      */
     private void getAndroidSDK() {
 
-        URL url = null;                                          // url pointing to particular downloads
-        String folderName = null;                                // folder name to where the file is downloaded
         String androidSdkFolderName = "android-sdk";            // name of the folder created to download SDK
 
-        // Downloading Android SDK Tools
-        System.out.println("Downloading Android SDK tools...");
-
-
-        /*  makes directory in the working folder to download SDK , if the directory cannot be made quit the program and
-          ask user to check for the available directories in the same name. */
         if (!new File(workingDirectory + File.separator + androidSdkFolderName).mkdir()) {
             System.out.println("Unable to make a directory named " + androidSdkFolderName + " in " + workingDirectory);
-            System.out.println("Please make sure it is not available already and can be created");
-            System.exit(0);
+           // System.exit(0);
         }
+
         androidSdkHome = workingDirectory + File.separator + androidSdkFolderName;  // set the SDK home location
-        // Make URL to download the Android SDK tools
-        try {
-            url = new URL("https://dl.google.com/android/repository/tools_r25.2.5-" + osSuffix + ".zip");
-            folderName = "tools_r25.2.5-" + osSuffix + ".zip";
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-            System.exit(0);
-        }
-        // Download SDK tools specified in the url to the folder specified by folderName
-        downloadArtifacts(url, androidSdkHome + File.separator + folderName);
-        System.out.println("Configuring Android SDK tools...");
-        //extracting the downloaded zip file specified by argument
-        extractFolder(androidSdkHome + File.separator + folderName);
 
-        //Downloading Android Platform Tools
-        System.out.println("Downloading Android platform tools...");
-        // make url to download SDK platform tools
-        try {
-            url = new URL("http://dl.google.com/android/repository/platform-tools_r25.0.3-" + osSuffix + ".zip");
-            folderName = "platform-tools_r25.0.3-" + osSuffix + ".zip";
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-            System.exit(0);
-        }
-        // Download SDK platform specified in the url to the folder specified by folderName
-        downloadArtifacts(url, androidSdkHome + File.separator + folderName);
-        System.out.println("Configuring Android platform tools...");
-        extractFolder(androidSdkHome + File.separator + folderName);
+        getTools(System.getProperty(Constants.SDK_TOOLS_URL), "_Android-sdk-tools.zip");
 
-        // Writing SDK location to file sdkLocationFile
+        getTools(System.getProperty(Constants.PLATFORM_TOOLS_URL), "_Android-platform-tools.zip");
+
+//        adbLocation = androidSdkHome + File.separator + "platform-tools" + File.separator + "adb";
+//        if (osSuffix.equals(Constants.WINDOWS_OS)){
+//            adbLocation += ".exe";
+//        }
+//        setExecutePermission(adbLocation);
+
         try (FileWriter writer = new FileWriter(sdkLocationFile)) {
             writer.write(androidSdkHome);
         } catch (IOException e) {
-            e.printStackTrace();
-            System.exit(0);
+            e.printStackTrace(); // can continue , but will ask for sdk location again
         }
+    }
+
+    private void getTools(String url, String folderName) {
+
+        System.out.println("Downloading " + folderName);
+
+        downloadArtifacts(url, androidSdkHome + File.separator + folderName);
+
+        System.out.println("Configuring " + folderName);
+
+        extractFolder(androidSdkHome + File.separator + folderName);
+
     }
 
     /**
@@ -253,30 +247,29 @@ public class AndroidTryIt {
      * @throws IOException process throws  if an I/O error occurs.
      */
     private void startAVD() throws IOException {
-        String WSO2_AVD_location = userHome + File.separator + ".android" + File.separator + "avd" + File.separator + "WSO2_AVD.avd";
-        File WSO2_AVD = new File(WSO2_AVD_location);
+        String wso2AvdLocation = userHome + File.separator + ".android" + File.separator + "avd" + File.separator + "WSO2_AVD.avd";
 
-        checkForPlatform();                       // check for the SDK platform
-        checkForSystemImages();                   // check fr the SDK system images
+        checkForPlatform();
+        checkForSystemImages();
 
-        //check for the WS2_AVD and creates if not available
-        if (!WSO2_AVD.isDirectory()) {
+        if (!new File(wso2AvdLocation).isDirectory()) {
             Scanner read = new Scanner(System.in);
             System.out.println("Do you want to create WSO2_AVD with default configs (Y/n)?: ");
-            String response = read.next().toLowerCase();
-            if (response.matches("y")) {
+            if (read.next().toLowerCase().matches("y")) {
                 createAVD();                                          // create the WSO2_AVD
                 return;
             }
         }
+
         System.out.println("+----------------------------------------------------------------+");
         System.out.println("|                        WSO2 Android Tryit                      |");
         System.out.println("+----------------------------------------------------------------+");
 
         // List the available AVDs in the system
         String emulatorLocation = androidSdkHome + File.separator + "tools" + File.separator + "emulator";
-        if (osSuffix.equals("windows")) emulatorLocation += ".exe";
-        setExectuePermission(emulatorLocation);
+
+        if (osSuffix.equals(Constants.WINDOWS_OS)) emulatorLocation += Constants.WINDOWS_EXTENSION_EXE;
+        setExecutePermission(emulatorLocation);
         // process to list the available AVDs
         ProcessBuilder processBuilder = new ProcessBuilder(emulatorLocation, "-list-avds");
         Process process = processBuilder.start();
@@ -296,14 +289,17 @@ public class AndroidTryIt {
         } else if (devices.size() == 1) {                           // if only one AVD is there , starts it
             runEmulator(devices.get(0));                            // runs the emulator for the AVD
         } else {
-            System.out.println("\nAvailable AVDs in the system\n");     // print the available AVDs
-            for (int i = 0; i < devices.size(); i++) {
-                System.out.println(++i + ") " + devices.get(--i));
+            System.out.println("\nAvailable AVDs in the system\n");// print the available AVDs
+            //TODO
+            int count = 1;
+            for (String device : devices) {
+                System.out.println(count + ") " + devices.get(count - 1));
             }
             System.out.print("\nEnter AVD number to start (eg: 1) :");       // Asks for the user to start particular AVD
             Scanner read = new Scanner(System.in);
-            int avd_no = read.nextInt();
-            runEmulator(devices.get(--avd_no));                                  // run the Emulator with specific ID
+            //TODO
+            int avdNo = read.nextInt();
+            runEmulator(devices.get(--avdNo));                                  // run the Emulator with specific ID
         }
     }
 
@@ -315,56 +311,65 @@ public class AndroidTryIt {
     private void createAVD() throws IOException {
         System.out.println("Creating a new AVD device");
 
-        // creates the path of executable file avdmanager
         String avdManagerPath = androidSdkHome + File.separator + "tools" + File.separator + "bin"
                 + File.separator + "avdmanager";
-        if (osSuffix.equals("windows")) avdManagerPath += ".bat";
-        File avdManagerFile = new File(avdManagerPath);
+        if (osSuffix.equals(Constants.WINDOWS_OS)) {
+            avdManagerPath += Constants.WINDOWS_EXTENSION_BAT;
+        }
 
-        // creates the path of executable file android
-        String andoridPath = androidSdkHome + File.separator + "tools" + File.separator + "android";
-        if (osSuffix.equals("windows")) andoridPath += ".bat";
-        setExectuePermission(andoridPath);                    // provides execute permission to android
+        String androidPath = androidSdkHome + File.separator + "tools" + File.separator + "android";
+        if (osSuffix.equals(Constants.WINDOWS_OS)) {
+            androidPath += Constants.WINDOWS_EXTENSION_BAT;
+        }
+        setExecutePermission(androidPath);
 
-        // check for the avdmanger and creates a new AVD named WSO2_AVD
-        if (avdManagerFile.exists()) {
-            setExectuePermission(avdManagerPath);
-            // starts a process to create the WSO_AVD
-            ProcessBuilder create_avd = new ProcessBuilder(avdManagerPath, "create", "avd", "-k",
+
+        if (new File(avdManagerPath).exists()) {
+
+            setExecutePermission(avdManagerPath);
+            // Process to create the WSO_AVD using AVD Manager executable
+            ProcessBuilder createAvdProcessBuilder = new ProcessBuilder(avdManagerPath, "create", "avd", "-k",
                     "system-images;android-23;default;x86", "-n", "WSO2_AVD");
-            create_avd.redirectInput(ProcessBuilder.Redirect.INHERIT);
-            create_avd.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-            Process process = create_avd.start();
+
+            createAvdProcessBuilder.redirectInput(ProcessBuilder.Redirect.INHERIT);
+            createAvdProcessBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+
+            Process createAvdProcess = createAvdProcessBuilder.start();
+
             try {
-                process.waitFor();
+                createAvdProcess.waitFor();
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 System.exit(0);
             }
-        }
-        // if avamanager not available creates the avd with android executable
-        else {
-            // starts a process to create WSO2_AVD using android executable file
-            ProcessBuilder createAvd = new ProcessBuilder(andoridPath, "create", "avd", "-n", "WSO2_AVD", "-t", "android-23");
+        } else {
+
+            // Process to create WSO2_AVD using android executable file
+            ProcessBuilder createAvd = new ProcessBuilder(androidPath, "create", "avd", "-n", "WSO2_AVD", "-t", "android-23");
+
             createAvd.redirectInput(ProcessBuilder.Redirect.INHERIT);
             createAvd.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-            Process process = createAvd.start();
-            // wait for the creation process to end
+
+            Process createAvdProcess = createAvd.start();
+
             try {
-                process.waitFor();
+                createAvdProcess.waitFor();
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 System.exit(0);
             }
         }
 
-        // location of the WSO2_AVD configuration file provided by WSO2 with ANDROID TRY IT
+
         String configFileLocation = workingDirectory + File.separator + "resources" + File.separator + "config.ini";
+
         String wso2ConfigFile = userHome + File.separator + ".android" + File.separator + "avd" + File.separator
                 + "WSO2_AVD.avd" + File.separator + "config.ini";
+
         // replace the WSO2_AVD configuration to the AVD created
         Files.copy(Paths.get(configFileLocation), Paths.get(wso2ConfigFile), StandardCopyOption.REPLACE_EXISTING);
-        startAVD();                      // starts the AVD
+
+        startAVD();
     }
 
     /**
@@ -376,13 +381,14 @@ public class AndroidTryIt {
     private void runEmulator(String deviceId) throws IOException {
 
         // mac os and windows needs hardware_Accelerated_execution_Manager
-        if (osSuffix.equals("macosx") || osSuffix.equals("windows")) {
+        if (osSuffix.equals(Constants.MAC_OS) || osSuffix.equals(Constants.WINDOWS_OS)) {
             installHAXM();
         }
 
         System.out.println("Starting : " + deviceId);
-        startEmulator(deviceId);                        // start the Emulator specified by the deviceId
-        checkCache_img(deviceId);                       // check whether cache.img file is created in AVD folder
+
+        startEmulator(deviceId);
+        checkCacheImg(deviceId);
     }
 
     /**
@@ -390,6 +396,7 @@ public class AndroidTryIt {
      *
      * @param zipFile String path of the zip file.
      */
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     private static void extractFolder(String zipFile) {
         int BUFFER = 2048;
         File file = new File(zipFile);
@@ -398,6 +405,7 @@ public class AndroidTryIt {
             zip = new ZipFile(file);
             String newPath = zipFile.substring(0, zipFile.lastIndexOf(File.separator));
 
+            //noinspection ResultOfMethodCallIgnored
             new File(newPath).mkdirs();
 
             Enumeration zipFileEntries = zip.entries();
@@ -447,38 +455,30 @@ public class AndroidTryIt {
             e.printStackTrace();
             System.exit(0);
         }
-        new File(zipFile).delete();
+        if (!new File(zipFile).delete()) {
+            System.out.println("Downloaded zip : " + zipFile + " - not deleted");
+        }
     }
 
     /**
      * This method checks for the availability of android build tools in SDK location to run the AVD.
      */
     private void checkBuildTools() {
-        URL url = null;
-        String folderName = null;
-        //  Build tools location in the Android SDK
+
         File buildTools = new File(androidSdkHome + File.separator + "build-tools"
                 + File.separator + "25.0.2");
 
-        // download the build tools if not available
         if (!buildTools.exists()) {
-            System.out.println("Downloading Android build tools...");
-            try {
-                url = new URL("https://dl.google.com/android/repository/build-tools_r25.0.2-" + osSuffix + ".zip");
-                folderName = "build-tools_r25.0.2-" + osSuffix + ".zip";
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-                System.exit(0);
-            }
-            // download build tools
-            downloadArtifacts(url, androidSdkHome + File.separator + folderName);   // CODE
 
-            System.out.println("Configuring Android build tools...");
-            extractFolder(androidSdkHome + File.separator + folderName);
+            getTools(System.getProperty(Constants.BUILD_TOOL_URL), "_Android-build-tool.zip");
 
             File buildTool = new File(androidSdkHome + File.separator + "android-7.1.1");
+
+            //noinspection ResultOfMethodCallIgnored
             new File(androidSdkHome + File.separator + "build-tools").mkdirs();
-            buildTool.renameTo(new File(androidSdkHome + File.separator + "build-tools" + File.separator + "25.0.2"));
+            //noinspection ResultOfMethodCallIgnored
+            buildTool.renameTo(new File(androidSdkHome + File.separator + "build-tools"
+                    + File.separator + "25.0.2"));
         }
     }
 
@@ -489,14 +489,11 @@ public class AndroidTryIt {
      * @throws IOException process throws  if an I/O error occurs.
      */
     private void checkEmulatorBoot() throws IOException {
-        // adb executable location in the Android SDK
-        String adbLocation = androidSdkHome + File.separator + "platform-tools" + File.separator + "adb";
-        if (osSuffix.equals("windows")) adbLocation += ".exe";
-        setExectuePermission(adbLocation);                    // set permission for executable
 
         BufferedReader reader;
         String readline;
         Boolean sys_boot_complete = false;
+
         // check for the completion of the boot process
         do {
             // process to check boot completion process
@@ -513,13 +510,14 @@ public class AndroidTryIt {
                 // if boot process is success the process gives 1 as output
                 if (readline.contains("1")) sys_boot_complete = true;
             }
-            reader.close();
             System.out.print(".");
+            //TODO
             try {
                 Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-                System.exit(0);
+            } catch (InterruptedException ignored) {
+
+            }finally {
+                reader.close();
             }
         } while (!sys_boot_complete);
         System.out.println();
@@ -542,14 +540,32 @@ public class AndroidTryIt {
             }
         }
         // writes the Android SDK location to sdkLocationFile file
+        Scanner scanner = null;
         try {
-            Scanner scanner = new Scanner(sdkLocationFile);
+            scanner = new Scanner(sdkLocationFile);
             androidSdkHome = scanner.useDelimiter("\\Z").next();
-            scanner.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-            System.exit(0);
+            System.out.println("sdkLocation file not found");
+            //TODO
+            handleException("", e);
+        }finally {
+            if(scanner !=null) {
+                scanner.close();
+            }
         }
+
+        adbLocation = androidSdkHome + File.separator + "platform-tools" + File.separator + "adb";
+        if (osSuffix.equals(Constants.WINDOWS_OS)){
+            adbLocation += ".exe";
+        }
+        setExecutePermission(adbLocation);
+    }
+
+    private void handleException(String message, Exception ex) {
+        System.out.println(message);
+        ex.printStackTrace();
+        System.exit(0);
     }
 
     /**
@@ -560,50 +576,54 @@ public class AndroidTryIt {
      */
     private String[] checkForAgent() throws IOException {
 
-        // location of the executable file adb present in Android SDK
-        String adbLocation = androidSdkHome + File.separator + "platform-tools" + File.separator + "adb";
-        if (osSuffix.equals("windows")) adbLocation += ".exe";
-        setExectuePermission(adbLocation);
 
         // location of the executable file aapt present in Android SDK
-        String apk_file_location = workingDirectory + File.separator + "resources" + File.separator + "android-agent.apk";
-        String aapt_location = androidSdkHome + File.separator + "build-tools" + File.separator + "25.0.2"
+        String apkFileLocation = workingDirectory + File.separator + "resources" + File.separator + "android-agent.apk";
+
+        String aaptLocation = androidSdkHome + File.separator + "build-tools" + File.separator + "25.0.2"
                 + File.separator + "aapt";
-        if (osSuffix.equals("windows")) aapt_location += ".exe";
-        setExectuePermission(aapt_location);
+
+        if (osSuffix.equals("windows")) {
+            aaptLocation += ".exe";
+        }
+        setExecutePermission(aaptLocation);
 
         //process to get the name of package and launchable-activity available in android agent apk file
-        ProcessBuilder badging_apk_file = new ProcessBuilder(aapt_location, "d", "badging", apk_file_location);
-        Process process = badging_apk_file.start();
+
+        ProcessBuilder badgingApkFileProcessBuilder = new ProcessBuilder(aaptLocation, "d", "badging", apkFileLocation);
+        Process badginApkFileProcess = badgingApkFileProcessBuilder.start();
 
         String pkg = null;
-        String act = null;
+        String activity = null;
         Boolean hasAgent = false;
 
-        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(badginApkFileProcess.getInputStream()));
         String readLine;
+
         while ((readLine = reader.readLine()) != null) {
             if (readLine.contains("package")) {
                 pkg = readLine.substring(readLine.indexOf("name=") + 6).substring(0,
-                        readLine.substring(readLine.indexOf("name=") + 6).indexOf("'"));
+                        readLine.substring(readLine.indexOf(Constants.NAME)
+                                + 6).indexOf("'"));
             }
             if (readLine.contains("launchable-activity")) {
-                act = readLine.substring(readLine.indexOf("name=") + 6).substring(0,
-                        readLine.substring(readLine.indexOf("name=") + 6).indexOf("'"));
+                activity = readLine.substring(readLine.indexOf(Constants.NAME) + 6).substring(0,
+                        readLine.substring(readLine.indexOf(Constants.NAME)
+                                + 6).indexOf("'"));
             }
         }
-        reader.close();
+        reader.close();        // can close here ? no finally
 
         // process to list the available packages in the shell
-        ProcessBuilder list_packages = new ProcessBuilder(adbLocation, "shell", "pm", "list", "packages");
-        process = list_packages.start();
+        ProcessBuilder listPackages = new ProcessBuilder(adbLocation, "shell", "pm", "list", "packages");
+        Process listPackagesProcess = listPackages.start();
         try {
-            process.waitFor();
+            listPackagesProcess.waitFor();
         } catch (InterruptedException e) {
             e.printStackTrace();
             System.exit(0);
         }
-        reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        reader = new BufferedReader(new InputStreamReader(listPackagesProcess.getInputStream()));
 
         while ((readLine = reader.readLine()) != null) {
             if (readLine.contains("package:" + pkg)) {
@@ -612,11 +632,10 @@ public class AndroidTryIt {
         }
         reader.close();
 
-        // if the available package and launchable activity doesn't match with android-agent.apk install the android agent
         if (!hasAgent) {
             installAgent();
         }
-        return new String[]{pkg, act};
+        return new String[]{pkg, activity};
     }
 
     /**
@@ -625,18 +644,16 @@ public class AndroidTryIt {
      * @throws IOException process start throws  if an I/O error occurs.
      */
     private void installAgent() throws IOException {
-        String adbLocation = androidSdkHome + File.separator + "platform-tools" + File.separator + "adb";
-        if (osSuffix.equals("windows")) adbLocation += ".exe";
-        setExectuePermission(adbLocation);
 
         System.out.println("Installing agent ...");
-        String android_agent_location = workingDirectory + File.separator + "resources" + File.separator + "android-agent.apk";
+        String androidAgentLocation = workingDirectory + File.separator + "resources" + File.separator
+                + "android-agent.apk";
 
-        // process to install agent
-        ProcessBuilder install_android_agent = new ProcessBuilder(adbLocation, "install", android_agent_location);
-        Process installing_android_agent = install_android_agent.start();
+        ProcessBuilder installAgentProcessBuilder = new ProcessBuilder(adbLocation, "install", androidAgentLocation);
+        Process installAgentProcess = installAgentProcessBuilder.start();
+
         try {
-            installing_android_agent.waitFor();
+            installAgentProcess.waitFor();
         } catch (InterruptedException e) {
             e.printStackTrace();
             System.exit(0);
@@ -651,17 +668,14 @@ public class AndroidTryIt {
      */
     private void startPackage(String[] agents) throws IOException {
         String pkg = agents[0];                // package name
-        String act = agents[1];                     // launchable activity name
+        String activity = agents[1];                     // launchable activity name
 
-        String adbLocation = androidSdkHome + File.separator + "platform-tools" + File.separator + "adb";
-        if (osSuffix.equals("windows")) adbLocation += ".exe";
-        setExectuePermission(adbLocation);
-        // process to start the package
-        ProcessBuilder pkg_start = new ProcessBuilder(adbLocation, "shell", "am", "start", "-n", pkg + "/" + act);
-        Process pkg_start_process = pkg_start.start();
+
+        ProcessBuilder pkgStartProcessBuilder = new ProcessBuilder(adbLocation, "shell", "am", "start", "-n", pkg + "/" + activity);
+        Process pkgStartProcess = pkgStartProcessBuilder.start();
 
         try {
-            pkg_start_process.waitFor();
+            pkgStartProcess.waitFor();
         } catch (InterruptedException e) {
             e.printStackTrace();
             System.exit(0);
@@ -676,22 +690,13 @@ public class AndroidTryIt {
 
         if (!platform.isDirectory()) {
 
+            getTools(System.getProperty(Constants.PLATFORM_URL),"_Android-platforms.zip");
+
             System.out.println("Downloading Android platform...");
 
-            URL url = null;
-            String folderName = null;
-            try {
-                url = new URL("https://dl.google.com/android/repository/platform-23_r03.zip");
-                folderName = "platform-23_r03" + osSuffix + ".zip";
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-                System.exit(0);
-            }
-            // download Android Platform
-            downloadArtifacts(url, androidSdkHome + File.separator + folderName);
-            System.out.println("Configuring Android Platform...");
-            extractFolder(androidSdkHome + File.separator + folderName);
+            //noinspection ResultOfMethodCallIgnored
             new File(androidSdkHome + File.separator + "platforms").mkdir();
+            //noinspection ResultOfMethodCallIgnored
             new File(androidSdkHome + File.separator + "android-6.0").renameTo(new File(androidSdkHome
                     + File.separator + "platforms" + File.separator + "android-23"));
         }
@@ -701,29 +706,22 @@ public class AndroidTryIt {
      * This method checks for the system images in the Android SDK and downloads if not available.
      */
     private void checkForSystemImages() {
-        // System images location in the Android SDK
+
         File system_images = new File(androidSdkHome + File.separator + "system-images"
                 + File.separator + "android-23" + File.separator + "default");
-        // check for system images directory
+
         if (!system_images.isDirectory()) {
-            System.out.println("Downloading Android system image...");
-            URL url = null;
-            String folderName = null;
-            try {
-                url = new URL("https://dl.google.com/android/repository/sys-img/android/x86-23_r09.zip");
-                folderName = "sys-img" + ".zip";
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-                System.exit(0);
-            }
-            // download system images
-            downloadArtifacts(url, androidSdkHome + File.separator + folderName);
-            System.out.println("Configuring Android system image...");
-            extractFolder(androidSdkHome + File.separator + folderName);
+
+            getTools(System.getProperty(Constants.SYSTEM_IMAGE_URL),"_sys-images.zip");
+
+
+            //noinspection ResultOfMethodCallIgnored
             new File(androidSdkHome + File.separator + "system-images" + File.separator
                     + "android-23" + File.separator + "default").mkdirs();
+            //noinspection ResultOfMethodCallIgnored
             new File(androidSdkHome + File.separator + "x86").renameTo(new File(androidSdkHome
-                    + File.separator + "system-images" + File.separator + "android-23" + File.separator + "default" + File.separator + "x86"));
+                    + File.separator + "system-images" + File.separator + "android-23" + File.separator
+                    + "default" + File.separator + "x86"));
         }
     }
 
@@ -734,37 +732,37 @@ public class AndroidTryIt {
     private void installHAXM() {
         String HAXM_location = androidSdkHome + File.separator + "extras" + File.separator + "intel"
                 + File.separator + "Hardware_Accelerated_Execution_Manager";
+
         if (!new File(HAXM_location).isDirectory()) {
+
+            //getTools(System.getProperty(Constants.HAXM_URL),);
+
+            //TODO change haxm download to gettools
+
             System.out.println("Downloading intel HAXM...");
 
             new File(HAXM_location).mkdirs();
-            URL url = null;
-            String folderName = null;
+            String folderName = "_haxm.zip";
 
-            // Download HAXM for specific OS
-            try {
-                url = new URL("https://dl.google.com/android/repository/extras/intel/haxm-" + osSuffix + "_r6_0_5.zip");
-                folderName = "haxm-" + osSuffix + ".zip";
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-                System.exit(0);
-            }
-            downloadArtifacts(url, HAXM_location + File.separator + folderName);
+            downloadArtifacts(System.getProperty(Constants.HAXM_URL), HAXM_location + File.separator + folderName);
             System.out.println("Configuring HAXM...");
             extractFolder(HAXM_location + File.separator + folderName);
 
             String HAXM_installer = HAXM_location + File.separator + "silent_install";
-            if (osSuffix.equals("windows")) HAXM_installer += ".bat";
+
+            if (osSuffix.equals(Constants.WINDOWS_OS)) HAXM_installer += Constants.WINDOWS_EXTENSION_BAT;
             else HAXM_installer += ".sh";
-            setExectuePermission(HAXM_installer);
+            setExecutePermission(HAXM_installer);
 
             // process to install HAXM
             ProcessBuilder processBuilder = new ProcessBuilder(HAXM_installer, "-m", "2048", "-log",
-                    workingDirectory + File.separator + "haxm_silent_run.log");
+                    workingDirectory + File.separator + "haxmSilentRun.log");
+
             processBuilder.directory(new File(HAXM_location));
             processBuilder.redirectInput(ProcessBuilder.Redirect.INHERIT);
             processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
             Process process = null;
+
             try {
                 process = processBuilder.start();
             } catch (IOException e) {
@@ -791,26 +789,32 @@ public class AndroidTryIt {
 
         // emulator location in the Android SDK
         String emulatorLocation = androidSdkHome + File.separator + "tools" + File.separator + "emulator";
-        if (osSuffix.equals("windows")) emulatorLocation += ".exe";
-        setExectuePermission(emulatorLocation);
+        if (osSuffix.equals(Constants.WINDOWS_OS)) {
+            emulatorLocation += Constants.WINDOWS_EXTENSION_EXE;
+        }
+        setExecutePermission(emulatorLocation);
 
         // qemu file location -- differs for different OS
         String qemu_system_file_location = androidSdkHome + File.separator + "tools" + File.separator
                 + "qemu" + File.separator;
-        if (osSuffix.equals("macosx")) {
+
+        if (osSuffix.equals(Constants.MAC_OS)) {
             qemu_system_file_location += "darwin" + "-x86_64" + File.separator + "qemu-system-i386";
         }
-        if (osSuffix.equals("linux")) {
-            qemu_system_file_location += osSuffix + "-x86_64" + File.separator + "qemu-system-i386";
-        }
-        if (osSuffix.equals("windows")) {
+        else if (osSuffix.equals(Constants.WINDOWS_OS)) {
             qemu_system_file_location += osSuffix + "-x86_64" + File.separator + "qemu-system-i386.exe";
         }
-        setExectuePermission(qemu_system_file_location);       // set the execution persmission for quemu file
+        else{
+            qemu_system_file_location += osSuffix + "-x86_64" + File.separator + "qemu-system-i386";
+        }
+
+        setExecutePermission(qemu_system_file_location);       // set the execution persmission for quemu file
 
         // Starts the Emulator and log the emulator outputs to file
-        AndroidTryItEmulator logFile = new AndroidTryItEmulator(deviceId, emulatorLocation);       // Run Emulator and log
-        logFile.start();
+        ExecutorService service = Executors.newSingleThreadExecutor();
+        service.execute(new TryItEmulator(deviceId, emulatorLocation));
+        //TryItEmulator logFile =        // Run Emulator and log
+        //logFile.start();
     }
 
     /**
@@ -818,11 +822,11 @@ public class AndroidTryIt {
      *
      * @param deviceId - name of the AVD.
      */
-    private void checkCache_img(String deviceId) {
-        File cache_img = new File(userHome + File.separator + ".android"
+    private void checkCacheImg(String deviceId) {
+        File cacheImg = new File(userHome + File.separator + ".android"
                 + File.separator + "avd" + File.separator + deviceId + ".avd" + File.separator + "cache.img");
         // cache image ensures whether the AVD is loaded properly
-        while (!cache_img.exists()) {
+        while (!cacheImg.exists()) {
             System.out.print(".");
             try {
                 Thread.sleep(1000);
@@ -834,6 +838,7 @@ public class AndroidTryIt {
         System.out.println();
 
         // wait for 5sec to fully load the cache image
+        //TODO
         try {
             Thread.sleep(5000);
         } catch (InterruptedException e) {
@@ -848,7 +853,8 @@ public class AndroidTryIt {
      *
      * @param fileName name of the file to set execution permission.
      */
-    private static void setExectuePermission(String fileName) {
+    //TODO
+    private static void setExecutePermission(String fileName) {
         if (!new File(fileName).canExecute()) {
             if (!new File(fileName).setExecutable(true)) {
                 System.out.println("Set the Execute permission of : " + fileName);

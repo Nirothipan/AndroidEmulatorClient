@@ -26,7 +26,6 @@ import java.io.InputStreamReader;
  * This class starts the Emulator with the passed ID and log the output to emulator.log.
  */
 public class AndroidTryItEmulator implements Runnable {
-    private Thread thread;
     private String deviceID;                    // name of the AVD to start
     private String emulatorLocation;            // location of the executable file emulator
 
@@ -40,9 +39,9 @@ public class AndroidTryItEmulator implements Runnable {
         // create a process to start the AVD specified bt deviceID
         ProcessBuilder processBuilder = new ProcessBuilder(emulatorLocation, "-avd", deviceID);
         try {
+            String readline;
             Process process = processBuilder.start();
             reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String readline;
             // write the emulator start process output to the file emulator.log
             try (FileWriter writer = new FileWriter("emulator.log")) {
                 try {
@@ -60,10 +59,4 @@ public class AndroidTryItEmulator implements Runnable {
         }
     }
 
-    void start() {
-        if (thread == null) {
-            thread = new Thread(this);
-            thread.start();
-        }
-    }
 }
