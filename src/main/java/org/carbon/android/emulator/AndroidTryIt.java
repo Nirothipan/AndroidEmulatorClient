@@ -43,7 +43,7 @@ public class AndroidTryIt {
     private File sdkLocationFile;                   // File to write the Android SDK location, created in workingDirectory
 
     /**
-     * this method gets the system specific variables
+     * This method gets the system specific variables.
      */
     private AndroidTryIt() {
         osSuffix = System.getProperty("os.name").toLowerCase();             // get the OS name of the user
@@ -60,9 +60,9 @@ public class AndroidTryIt {
     }
 
     /**
-     * this method creates an android virtual device
+     * This method creates an android virtual device.
      *
-     * @param args commandline arguments
+     * @param args commandline arguments.
      */
     public static void main(String[] args) {
 
@@ -120,10 +120,10 @@ public class AndroidTryIt {
 
 
     /**
-     * this method downloads the files
+     * This method downloads the files.
      *
-     * @param url        - the URL to download from
-     * @param folderName - the folder location to download the files to
+     * @param url        - the URL to download from.
+     * @param folderName - the folder location to download the files to.
      */
     private static void downloadArtifacts(URL url, String folderName) {
         ReadableByteChannel rbc = null;
@@ -150,8 +150,8 @@ public class AndroidTryIt {
 
 
     /**
-     * this method validates the Android SDK location provided by the user and write it to the file
-     * sdkLoctionFile
+     * This method validates the Android SDK location provided by the user and write it to the file
+     * sdkLoctionFile.
      */
     private void setSDKPath() {
         System.out.println("Please provide android SDK location");
@@ -179,7 +179,7 @@ public class AndroidTryIt {
 
 
     /**
-     * this method creates a folder named android-sdk and downloads the minimum tools for SDK
+     * This method creates a folder named android-sdk and downloads the minimum tools for SDK
      * and write the sdk-location to the file sdkLocationFile.
      */
     private void getAndroidSDK() {
@@ -239,9 +239,9 @@ public class AndroidTryIt {
     }
 
     /**
-     * this method starts the AVD specified by the user
+     * This method starts the AVD specified by the user.
      *
-     * @throws IOException process throws  if an I/O error occurs
+     * @throws IOException process throws  if an I/O error occurs.
      */
     private void startAVD() throws IOException {
         String WSO2_AVD_location = userHome + File.separator + ".android" + File.separator + "avd" + File.separator + "WSO2_AVD.avd";
@@ -299,9 +299,9 @@ public class AndroidTryIt {
     }
 
     /**
-     * this method creates WSO2_AVD with the specific configurations
+     * This method creates WSO2_AVD with the specific configurations.
      *
-     * @throws IOException process throws  if an I/O error occurs
+     * @throws IOException process throws  if an I/O error occurs.
      */
     private void createAVD() throws IOException {
         System.out.println("Creating a new AVD device");
@@ -359,10 +359,10 @@ public class AndroidTryIt {
     }
 
     /**
-     * this method runs the Android Emulator for the name specified by deviceId
+     * This method runs the Android Emulator for the name specified by deviceId.
      *
-     * @param deviceId String name of the device
-     * @throws IOException process throws  if an I/O error occurs
+     * @param deviceId String name of the device.
+     * @throws IOException process throws  if an I/O error occurs.
      */
     private void runEmulator(String deviceId) throws IOException {
 
@@ -377,9 +377,9 @@ public class AndroidTryIt {
     }
 
     /**
-     * this method extracts the zip file specified and deletes the zip after extraction
+     * This method extracts the zip file specified and deletes the zip after extraction.
      *
-     * @param zipFile String path of the zip file
+     * @param zipFile String path of the zip file.
      */
     private static void extractFolder(String zipFile) {
         int BUFFER = 2048;
@@ -442,7 +442,7 @@ public class AndroidTryIt {
     }
 
     /**
-     * this method checks for the availability of android build tools in SDK location to run the AVD.
+     * This method checks for the availability of android build tools in SDK location to run the AVD.
      */
     private void checkBuildTools() {
         URL url = null;
@@ -474,10 +474,10 @@ public class AndroidTryIt {
     }
 
     /**
-     * this method halts the system until the emulator is fully booted
-     * if boot process is not completed successfully, rest of the tasks won't be continued
+     * This method halts the system until the emulator is fully booted
+     * if boot process is not completed successfully, rest of the tasks won't be continued.
      *
-     * @throws IOException process throws  if an I/O error occurs
+     * @throws IOException process throws  if an I/O error occurs.
      */
     private void checkEmulatorBoot() throws IOException {
         // adb executable location in the Android SDK
@@ -517,7 +517,7 @@ public class AndroidTryIt {
     }
 
     /**
-     * this method gets the Android SDK location if available and sets the SDK path else downloads the SDK
+     * This method gets the Android SDK location if available and sets the SDK path else downloads the SDK.
      */
     private void setAndroidSDK() {
         sdkLocationFile = new File("sdkLocation");
@@ -544,10 +544,10 @@ public class AndroidTryIt {
     }
 
     /**
-     * this method check for the android agent in the specified AVD and installs it if not available
+     * This method check for the android agent in the specified AVD and installs it if not available.
      *
-     * @return package name and act name
-     * @throws IOException process throws  if an I/O error occurs
+     * @return package name and act name.
+     * @throws IOException process throws  if an I/O error occurs.
      */
     private String[] checkForAgent() throws IOException {
 
@@ -611,9 +611,9 @@ public class AndroidTryIt {
     }
 
     /**
-     * this method installs the Android Agent ( WSO2 iot agent )
+     * This method installs the Android Agent ( WSO2 iot agent ).
      *
-     * @throws IOException process start throws  if an I/O error occurs
+     * @throws IOException process start throws  if an I/O error occurs.
      */
     private void installAgent() throws IOException {
         String adbLocation = androidSdkHome + File.separator + "platform-tools" + File.separator + "adb";
@@ -635,10 +635,10 @@ public class AndroidTryIt {
     }
 
     /**
-     * this method starts the package (wso2.iot.agent)
+     * This method starts the package (wso2.iot.agent).
      *
-     * @param agents package name and launchable activity name
-     * @throws IOException process throws  if an I/O error occurs
+     * @param agents package name and launchable activity name.
+     * @throws IOException process throws  if an I/O error occurs.
      */
     private void startPackage(String[] agents) throws IOException {
         String pkg = agents[0];                // package name
@@ -660,7 +660,7 @@ public class AndroidTryIt {
     }
 
     /**
-     * this method checks for the availability of Android Platform in SDK and if not available downloads it
+     * This method checks for the availability of Android Platform in SDK and if not available downloads it.
      */
     private void checkForPlatform() {
         File platform = new File(androidSdkHome + File.separator + "platforms" + File.separator + "android-23");
@@ -689,7 +689,7 @@ public class AndroidTryIt {
     }
 
     /**
-     * this method checks for the system images in the Android SDK and downloads if not available
+     * This method checks for the system images in the Android SDK and downloads if not available.
      */
     private void checkForSystemImages() {
         // System images location in the Android SDK
@@ -719,7 +719,7 @@ public class AndroidTryIt {
     }
 
     /**
-     * thi method install Hardware_Accelerated Execution_Manager in mac and windows os
+     * This method install Hardware_Accelerated Execution_Manager in mac and windows os.
      */
     private void installHAXM() {
         String HAXM_location = androidSdkHome + File.separator + "extras" + File.separator + "intel"
@@ -773,9 +773,9 @@ public class AndroidTryIt {
     }
 
     /**
-     * this method starts the Android emulator for specific device name
+     * This method starts the Android emulator for specific device name.
      *
-     * @param deviceId - name of the device to start the emulator
+     * @param deviceId - name of the device to start the emulator.
      */
     private void startEmulator(String deviceId) {
 
@@ -804,9 +804,9 @@ public class AndroidTryIt {
     }
 
     /**
-     * this method halts the system the cache.img file is created for the particular AVD started
+     * This method halts the system the cache.img file is created for the particular AVD started.
      *
-     * @param deviceId - name of the AVD
+     * @param deviceId - name of the AVD.
      */
     private void checkCache_img(String deviceId) {
         File cache_img = new File(userHome + File.separator + ".android"
@@ -833,10 +833,10 @@ public class AndroidTryIt {
     }
 
     /**
-     * this method sets the executable permission for the specified file.
-     * if the files are not the executable, the process cannot be continued
+     * This method sets the executable permission for the specified file,
+     * if the files are not the executable, the process cannot be continued.
      *
-     * @param fileName name of the file to set execution permission
+     * @param fileName name of the file to set execution permission.
      */
     private static void setExectuePermission(String fileName) {
         if (!new File(fileName).canExecute()) {

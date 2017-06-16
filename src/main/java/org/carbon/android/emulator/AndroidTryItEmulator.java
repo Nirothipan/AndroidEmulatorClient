@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 /**
- * This class starts the Emulator with the passed ID and log the output to emulator.log
+ * This class starts the Emulator with the passed ID and log the output to emulator.log.
  */
 public class AndroidTryItEmulator implements Runnable {
     private Thread thread;
