@@ -22,8 +22,8 @@ package org.carbon.android.emulator;
  */
 class Constants {
     static final String OS_NAME_PROPERTY = "os.name";
-    static final String USER_HOME_PROPERTY       = "user.home";
-    static final String USER_DIRECTORY_PROPERTY  = "user.dir";
+    static final String USER_HOME_PROPERTY = "user.home";
+    static final String USER_DIRECTORY_PROPERTY = "user.dir";
 
     static final String WINDOWS_OS = "windows";
     static final String WINDOWS_EXTENSION_EXE = ".exe";
@@ -31,9 +31,9 @@ class Constants {
 
     static final String MAC_OS = "macosx";
 
-    static final String NAME ="name=";
+    static final String NAME = "name=";
 
-    static final String SDK_TOOLS_URL = "sdk_tools_url" ;          // system variable naming syntax ??
+    static final String SDK_TOOLS_URL = "sdk_tools_url";
     static final String PLATFORM_TOOLS_URL = "platform_tools_url";
     static final String BUILD_TOOL_URL = "build_tools_url";
     static final String PLATFORM_URL = "platform_url";

@@ -15,6 +15,7 @@
 * specific language governing permissions and limitations
 * under the License.
 */
+
 package org.carbon.android.emulator;
 
 import java.io.BufferedReader;
@@ -48,8 +49,8 @@ public class TryItEmulator implements Runnable {
                     while ((readLine = reader.readLine()) != null) {
                         writer.append(readLine);
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
+                } catch (IOException ignored) {
+                    System.out.println("Unable to log Emulator activities");
                 }
             } finally {
                 reader.close();
