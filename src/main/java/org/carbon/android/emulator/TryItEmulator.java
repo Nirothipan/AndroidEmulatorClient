@@ -24,23 +24,23 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 /**
- * This class starts the Emulator with the passed ID and log the output to emulator.log.
+ * This class starts the Emulator with the name ID specified and log the output to emulator.log.
  */
 public class TryItEmulator implements Runnable {
-    private String deviceID;                    // name of the AVD to start
+    private String deviceId;                    // name of the AVD to start
     private String emulatorLocation;            // location of the executable file emulator
 
     TryItEmulator(String id, String emulator) {
-        deviceID = id;
+        deviceId = id;
         emulatorLocation = emulator;
     }
 
     public void run() {
+        String readLine;
         BufferedReader reader;
-        ProcessBuilder processBuilder = new ProcessBuilder(emulatorLocation, "-avd", deviceID);
-        try {
-            String readLine;
+        ProcessBuilder processBuilder = new ProcessBuilder(emulatorLocation, "-avd", deviceId);
 
+        try {
             Process process = processBuilder.start();
             reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 

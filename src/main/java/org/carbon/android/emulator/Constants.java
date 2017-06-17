@@ -19,7 +19,7 @@
 package org.carbon.android.emulator;
 
 /**
- * This class has the constants used.
+ * This class has the constant strings used and the system properties.
  */
 class Constants {
     static final String OS_NAME_PROPERTY = "os.name";
