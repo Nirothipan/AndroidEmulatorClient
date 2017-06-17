@@ -15,6 +15,7 @@
 * specific language governing permissions and limitations
 * under the License.
 */
+
 package org.carbon.android.emulator;
 
 /**
@@ -25,11 +26,11 @@ class Constants {
     static final String USER_HOME_PROPERTY = "user.home";
     static final String USER_DIRECTORY_PROPERTY = "user.dir";
 
+    static final String MAC_OS = "macosx";
     static final String WINDOWS_OS = "windows";
+
     static final String WINDOWS_EXTENSION_EXE = ".exe";
     static final String WINDOWS_EXTENSION_BAT = ".bat";
-
-    static final String MAC_OS = "macosx";
 
     static final String NAME = "name=";
 
@@ -38,6 +39,5 @@ class Constants {
     static final String BUILD_TOOL_URL = "build_tools_url";
     static final String PLATFORM_URL = "platform_url";
     static final String SYSTEM_IMAGE_URL = "sys_img_url";
-
     static final String HAXM_URL = "haxm_url";
 }
