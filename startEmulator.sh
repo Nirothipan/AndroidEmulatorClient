@@ -13,5 +13,12 @@ platform_url="https://dl.google.com/android/repository/platform-23_r03.zip"
 sys_img_url="https://dl.google.com/android/repository/sys-img/android/x86-23_r09.zip"
 haxm_url="https://dl.google.com/android/repository/extras/intel/haxm-macosx_r6_0_5.zip"
 
-java -Dsdk_tools_url=$sdk_tools_url -Dplatform_tools_url=$platform_tools_url -Dbuild_tools_url=$build_tools_url -Dplatform_url=$platform_url -Dsys_img_url=$sys_img_url -Dhaxm_url=$haxm_url -jar org.wso2.carbon.android.emulator-1.0.jar
+java\
+ -Dsdk_tools_url=$sdk_tools_url\
+ -Dplatform_tools_url=$platform_tools_url\
+ -Dbuild_tools_url=$build_tools_url\
+ -Dplatform_url=$platform_url\
+ -Dsys_img_url=$sys_img_url\
+ -Dhaxm_url=$haxm_url\
+ -jar org.wso2.carbon.android.emulator-1.0.jar
 echo 
