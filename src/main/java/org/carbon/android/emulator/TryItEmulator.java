@@ -19,9 +19,13 @@
 package org.carbon.android.emulator;
 
 import java.io.BufferedReader;
-import java.io.FileWriter;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 
 /**
  * This class starts the Emulator with the name ID specified and log the output to emulator.log.
@@ -37,27 +41,35 @@ public class TryItEmulator implements Runnable {
 
     public void run() {
         String readLine;
-        BufferedReader reader;
+        BufferedReader reader = null;
+        Writer writer = null;
         ProcessBuilder processBuilder = new ProcessBuilder(emulatorLocation, "-avd", deviceId);
-
         try {
             Process process = processBuilder.start();
-            reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-
-            try (FileWriter writer = new FileWriter("emulator.log")) {
-                try {
-                    while ((readLine = reader.readLine()) != null) {
-                        writer.append(readLine);
-                    }
-                } catch (IOException ignored) {
-                    System.out.println("Unable to log Emulator activities");
-                }
-            } finally {
-                reader.close();
+            reader = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
+            writer = new OutputStreamWriter(new FileOutputStream(new File("emulator.log")), StandardCharsets.UTF_8);
+            while ((readLine = reader.readLine()) != null) {
+                writer.append(readLine);
+                writer.append(readLine);
             }
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException ignored) {
+                    // reader close exception ignored
+                }
+            }
+            if (writer != null) {
+                try {
+                    writer.close();
+                } catch (IOException ignored) {
+                    // writer close exception ignored
+                }
+            }
+
         }
     }
-
 }
