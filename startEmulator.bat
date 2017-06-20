@@ -14,5 +14,5 @@ java\
  -Dplatform_url=%platform_url%\
  -Dsys_img_url=%sys_img_url%\
  -Dhaxm_url=%haxm_url%\
- -jar org.wso2.carbon.android.emulator-1.0.jar
+ -jar EmulatorJava.jar
 echo 
